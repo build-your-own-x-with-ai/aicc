@@ -17,19 +17,20 @@
 ╚═══════════════════════════════════════════════╝
 ```
 
-[![Tests](https://img.shields.io/badge/tests-78%20passed-brightgreen)](tests/)
+[![Tests](https://img.shields.io/badge/tests-87%20passed-brightgreen)](tests/)
 [![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)](tests/)
 [![Python](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-一个从零实现的 **完整、可工作的 C 语言编译器**，用于教学和学习编译器原理。支持真实的 C 程序编译和运行。
+一个从零实现的 **完整、可工作的 C 语言编译器**，用于教学和学习编译器原理。支持真实的 C 程序编译和运行，包括 **printf 字符串输出**。
 
 ## ✨ 特性
 
 - ✅ **完整的编译器流程**：词法 → 语法 → 语义 → 代码生成 → 可执行文件
 - ✅ **ARM64 原生支持**：为 Apple Silicon 优化
+- ✅ **字符串和 printf**：支持字符串字面量和 printf 输出
 - ✅ **真实可用**：能够编译并运行真实的 C 程序
-- ✅ **测试驱动**：78 个测试，100% 通过率
+- ✅ **测试驱动**：87 个测试，100% 通过率
 - ✅ **教学友好**：清晰的代码结构和详细注释
 - ✅ **命令行工具**：完整的 CLI 体验
 
@@ -46,7 +47,8 @@ pip install -e .
 # 2. 编译你的第一个程序
 cat > hello.c << 'EOF'
 int main() {
-    return 42;
+    printf("Hello, World!\n");
+    return 0;
 }
 EOF
 
@@ -54,7 +56,7 @@ python -m aicc hello.c -o hello
 
 # 3. 运行程序
 ./hello
-echo $?  # 输出: 42
+# 输出: Hello, World!
 ```
 
 ## 📦 支持的 C 特性
@@ -62,9 +64,11 @@ echo $?  # 输出: 42
 | 类别 | 支持的特性 |
 |------|-----------|
 | **数据类型** | `int` |
+| **字面量** | 整数、字符串 `"..."`、字符 `'c'` |
 | **运算符** | 算术 (`+`, `-`, `*`, `/`, `%`)<br>关系 (`==`, `!=`, `<`, `>`, `<=`, `>=`)<br>逻辑 (`&&`, `||`, `!`) |
 | **语句** | 变量声明、赋值、`return`<br>`if-else`、`while`、`for`<br>`break`、`continue` |
 | **函数** | 函数定义、调用、递归<br>最多 8 个参数 |
+| **内置函数** | `printf(string)` - 字符串输出 |
 | **作用域** | 块级作用域、函数作用域<br>变量遮蔽 |
 
 ## 💡 示例
@@ -72,7 +76,8 @@ echo $?  # 输出: 42
 ### Hello World
 ```c
 int main() {
-    return 42;
+    printf("Hello, World!\n");
+    return 0;
 }
 ```
 
@@ -86,18 +91,20 @@ int fib(int n) {
 }
 
 int main() {
+    printf("Computing fib(10)...\n");
     return fib(10);  // 返回 55
 }
 ```
 
-### 循环求和
+### 循环输出
 ```c
 int main() {
-    int sum = 0;
-    for (int i = 1; i <= 10; i = i + 1) {
-        sum = sum + i;
+    int i = 0;
+    while (i < 3) {
+        printf("Hello from AICC!\n");
+        i = i + 1;
     }
-    return sum;  // 返回 55
+    return 0;
 }
 ```
 
@@ -130,9 +137,15 @@ aicc source.c --parse-only
 
 ```bash
 # 编译并运行示例程序
-aicc examples/hello.c -o hello && ./hello; echo $?       # 42
-aicc examples/fib.c -o fib && ./fib; echo $?             # 55
-aicc examples/arithmetic.c -o arithmetic && ./arithmetic; echo $?  # 1
+aicc examples/hello_world.c -o hello_world && ./hello_world
+# 输出: Hello, World!
+
+aicc examples/fibonacci_printf.c -o fib && ./fib
+# 输出: Fibonacci sequence...
+# 返回值: 55
+
+aicc examples/multiple_printf.c -o multi && ./multi
+# 输出: 多行文本输出
 ```
 
 ## 🏗️ 架构设计
@@ -216,8 +229,9 @@ pytest --cov=src/aicc --cov-report=html tests/
 | 语法分析 | 19 | ✅ 100% |
 | 语义分析 | 26 | ✅ 100% |
 | 代码生成 | 15 | ✅ 100% |
+| Printf/字符串 | 9 | ✅ 100% |
 | 集成测试 | 7 | ✅ 100% |
-| **总计** | **78** | **✅ 100%** |
+| **总计** | **87** | **✅ 100%** |
 
 ## 📚 项目结构
 

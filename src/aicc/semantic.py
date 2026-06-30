@@ -85,6 +85,38 @@ class SemanticAnalyzer:
         self.current_function: Optional[Symbol] = None
         self.in_loop = False  # Track if we're inside a loop (for break/continue)
 
+        # Add built-in functions
+        self.add_builtin_functions()
+
+    def add_builtin_functions(self) -> None:
+        """Add built-in functions to the global scope."""
+        # printf(string) -> int
+        self.global_scope.define("printf", Symbol(
+            name="printf",
+            type=Type("int"),
+            is_function=True,
+            param_types=[Type("string")],
+            is_global=True
+        ))
+
+        # putchar(int) -> int
+        self.global_scope.define("putchar", Symbol(
+            name="putchar",
+            type=Type("int"),
+            is_function=True,
+            param_types=[Type("int")],
+            is_global=True
+        ))
+
+        # puts(string) -> int
+        self.global_scope.define("puts", Symbol(
+            name="puts",
+            type=Type("int"),
+            is_function=True,
+            param_types=[Type("string")],
+            is_global=True
+        ))
+
     def analyze(self, program: Program) -> None:
         """Analyze the entire program."""
         # First pass: collect all function declarations

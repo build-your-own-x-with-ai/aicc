@@ -18,13 +18,32 @@ class CodeGenARM64(CodeGenerator):
         self.continue_label_stack: List[str] = []
         self.current_scope: Optional[SymbolTable] = None
         self.local_vars: Dict[str, int] = {}  # Variable name -> stack offset
+        self.string_literals: Dict[str, str] = {}  # String value -> label
+        self.string_counter = 0
 
     def generate(self, program: Program) -> str:
         """Generate ARM64 assembly code for the entire program."""
+        # First pass: collect all string literals
+        self.collect_strings(program)
+
+        # Generate data section for strings
+        if self.string_literals:
+            self.emit(".data")
+            self.emit(".align 3")
+            for string_val, label in self.string_literals.items():
+                self.emit(f"{label}:")
+                # Escape string for assembly
+                escaped = self.escape_string(string_val)
+                self.emit(f'    .asciz "{escaped}"')
+            self.emit("")
+
         # Generate assembly header
-        self.emit(".arch armv8-a")
         self.emit(".text")
         self.emit(".align 2")
+        self.emit("")
+
+        # Generate built-in functions
+        self.generate_builtin_printf()
         self.emit("")
 
         # Generate code for each function
@@ -33,6 +52,106 @@ class CodeGenARM64(CodeGenerator):
             self.emit("")
 
         return self.get_output()
+
+    def escape_string(self, s: str) -> str:
+        """Escape a string for assembly output."""
+        result = []
+        for char in s:
+            if char == '\n':
+                result.append('\\n')
+            elif char == '\t':
+                result.append('\\t')
+            elif char == '\r':
+                result.append('\\r')
+            elif char == '\\':
+                result.append('\\\\')
+            elif char == '"':
+                result.append('\\"')
+            elif char == '\0':
+                result.append('\\0')
+            elif ord(char) < 32 or ord(char) > 126:
+                result.append(f'\\{ord(char):03o}')
+            else:
+                result.append(char)
+        return ''.join(result)
+
+    def collect_strings(self, node) -> None:
+        """Collect all string literals in the AST."""
+        if isinstance(node, StringLiteral):
+            if node.value not in self.string_literals:
+                label = f".str{self.string_counter}"
+                self.string_counter += 1
+                self.string_literals[node.value] = label
+        elif isinstance(node, Program):
+            for func in node.functions:
+                self.collect_strings(func)
+        elif isinstance(node, Function):
+            self.collect_strings(node.body)
+        elif isinstance(node, CompoundStmt):
+            for stmt in node.statements:
+                self.collect_strings(stmt)
+        elif isinstance(node, (VarDecl, Assignment, ReturnStmt, ExprStmt)):
+            if hasattr(node, 'init') and node.init:
+                self.collect_strings(node.init)
+            if hasattr(node, 'value') and node.value:
+                self.collect_strings(node.value)
+            if hasattr(node, 'expr') and node.expr:
+                self.collect_strings(node.expr)
+        elif isinstance(node, (IfStmt, WhileStmt, ForStmt)):
+            if hasattr(node, 'condition') and node.condition:
+                self.collect_strings(node.condition)
+            if hasattr(node, 'then_body'):
+                self.collect_strings(node.then_body)
+            if hasattr(node, 'else_body') and node.else_body:
+                self.collect_strings(node.else_body)
+            if hasattr(node, 'body'):
+                self.collect_strings(node.body)
+            if hasattr(node, 'init') and node.init:
+                self.collect_strings(node.init)
+            if hasattr(node, 'update') and node.update:
+                self.collect_strings(node.update)
+        elif isinstance(node, (BinaryOp, UnaryOp)):
+            if hasattr(node, 'left'):
+                self.collect_strings(node.left)
+            if hasattr(node, 'right'):
+                self.collect_strings(node.right)
+            if hasattr(node, 'operand'):
+                self.collect_strings(node.operand)
+        elif isinstance(node, FunctionCall):
+            for arg in node.args:
+                self.collect_strings(arg)
+
+    def generate_builtin_printf(self) -> None:
+        """Generate built-in printf function (simplified version)."""
+        self.emit("// Built-in printf function")
+        self.emit(".global _printf")
+        self.emit("_printf:")
+        self.emit("    stp x29, x30, [sp, #-16]!")
+        self.emit("    mov x29, sp")
+        self.emit("")
+        self.emit("    // x0 contains the string pointer")
+        self.emit("    mov x19, x0             // Save string pointer to callee-saved register")
+        self.emit("")
+        self.emit("    // Calculate string length")
+        self.emit("    mov x1, #0")
+        self.emit(".strlen_loop:")
+        self.emit("    ldrb w2, [x19, x1]")
+        self.emit("    cbz w2, .strlen_done")
+        self.emit("    add x1, x1, #1")
+        self.emit("    b .strlen_loop")
+        self.emit("")
+        self.emit(".strlen_done:")
+        self.emit("    // write(1, string, length)")
+        self.emit("    mov x2, x1              // length")
+        self.emit("    mov x1, x19             // string pointer")
+        self.emit("    mov x0, #1              // stdout")
+        self.emit("    mov x16, #4             // write syscall")
+        self.emit("    svc #0")
+        self.emit("")
+        self.emit("    mov x0, #0              // Return 0")
+        self.emit("    ldp x29, x30, [sp], #16")
+        self.emit("    ret")
+        self.emit("")
 
     def generate_function(self, func: Function) -> None:
         """Generate code for a function."""
@@ -246,6 +365,16 @@ class CodeGenARM64(CodeGenerator):
         """Generate code for an expression. Result is left in x0."""
         if isinstance(expr, IntLiteral):
             # Load immediate value into x0
+            self.emit(f"    mov x0, #{expr.value}")
+
+        elif isinstance(expr, StringLiteral):
+            # Load string address into x0
+            label = self.string_literals[expr.value]
+            self.emit(f"    adrp x0, {label}@PAGE")
+            self.emit(f"    add x0, x0, {label}@PAGEOFF")
+
+        elif isinstance(expr, CharLiteral):
+            # Load character value (ASCII) into x0
             self.emit(f"    mov x0, #{expr.value}")
 
         elif isinstance(expr, Variable):
