@@ -45,5 +45,15 @@ htmlcov/
 *.exe
 a.out
 
+# Compiled binaries from examples
+hello
+fib
+arithmetic
+prime
+factorial
+
+# External repositories
+riscv-gnu-toolchain/
+
 # macOS
 .DS_Store
