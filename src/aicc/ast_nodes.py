@@ -26,6 +26,22 @@ class IntLiteral(Expression):
 
 
 @dataclass
+class StringLiteral(Expression):
+    """String literal expression."""
+    value: str  # The string content
+    line: int
+    col: int
+
+
+@dataclass
+class CharLiteral(Expression):
+    """Character literal expression."""
+    value: int  # ASCII value of the character
+    line: int
+    col: int
+
+
+@dataclass
 class Variable(Expression):
     """Variable reference expression."""
     name: str

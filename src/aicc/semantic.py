@@ -369,6 +369,15 @@ class SemanticAnalyzer:
         if isinstance(expr, IntLiteral):
             return Type("int")
 
+        elif isinstance(expr, StringLiteral):
+            # Strings are treated as char* (pointer to char)
+            # For now, we'll represent it as a special "string" type
+            return Type("string")
+
+        elif isinstance(expr, CharLiteral):
+            # Characters are treated as int (their ASCII value)
+            return Type("int")
+
         elif isinstance(expr, Variable):
             symbol = self.current_scope.lookup(expr.name)
             if not symbol:

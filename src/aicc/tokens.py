@@ -10,6 +10,8 @@ class TokenType(Enum):
 
     # Literals
     INTEGER = auto()
+    STRING = auto()         # "string literal"
+    CHAR_LITERAL = auto()   # 'c'
 
     # Keywords
     INT = auto()

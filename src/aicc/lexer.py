@@ -104,6 +104,95 @@ class Lexer:
         token_type = KEYWORDS.get(ident, TokenType.IDENTIFIER)
         return Token(token_type, ident, start_line, start_col)
 
+    def read_string(self) -> Token:
+        """Read a string literal."""
+        start_line = self.line
+        start_col = self.col
+        string_value = ''
+
+        # Skip opening quote
+        self.advance()
+
+        while self.current_char() and self.current_char() != '"':
+            if self.current_char() == '\\':
+                # Handle escape sequences
+                self.advance()
+                if not self.current_char():
+                    raise LexerError("Unterminated string literal", start_line, start_col)
+
+                escape_char = self.current_char()
+                if escape_char == 'n':
+                    string_value += '\n'
+                elif escape_char == 't':
+                    string_value += '\t'
+                elif escape_char == 'r':
+                    string_value += '\r'
+                elif escape_char == '\\':
+                    string_value += '\\'
+                elif escape_char == '"':
+                    string_value += '"'
+                elif escape_char == '0':
+                    string_value += '\0'
+                else:
+                    string_value += escape_char
+                self.advance()
+            else:
+                string_value += self.current_char()
+                self.advance()
+
+        if not self.current_char():
+            raise LexerError("Unterminated string literal", start_line, start_col)
+
+        # Skip closing quote
+        self.advance()
+
+        return Token(TokenType.STRING, string_value, start_line, start_col)
+
+    def read_char_literal(self) -> Token:
+        """Read a character literal."""
+        start_line = self.line
+        start_col = self.col
+
+        # Skip opening quote
+        self.advance()
+
+        if not self.current_char():
+            raise LexerError("Unterminated character literal", start_line, start_col)
+
+        char_value = self.current_char()
+
+        # Handle escape sequences
+        if char_value == '\\':
+            self.advance()
+            if not self.current_char():
+                raise LexerError("Unterminated character literal", start_line, start_col)
+
+            escape_char = self.current_char()
+            if escape_char == 'n':
+                char_value = '\n'
+            elif escape_char == 't':
+                char_value = '\t'
+            elif escape_char == 'r':
+                char_value = '\r'
+            elif escape_char == '\\':
+                char_value = '\\'
+            elif escape_char == '\'':
+                char_value = '\''
+            elif escape_char == '0':
+                char_value = '\0'
+            else:
+                char_value = escape_char
+
+        self.advance()
+
+        if not self.current_char() or self.current_char() != '\'':
+            raise LexerError("Unterminated character literal", start_line, start_col)
+
+        # Skip closing quote
+        self.advance()
+
+        return Token(TokenType.CHAR_LITERAL, ord(char_value), start_line, start_col)
+
     def tokenize(self) -> Iterator[Token]:
         """Generate a stream of tokens from the source code."""
         while self.current_char() is not None:
@@ -119,6 +208,16 @@ class Lexer:
 
             if self.current_char() == '/' and self.peek_char() == '*':
                 self.skip_block_comment()
+                continue
+
+            # String literals
+            if self.current_char() == '"':
+                yield self.read_string()
+                continue
+
+            # Character literals
+            if self.current_char() == '\'':
+                yield self.read_char_literal()
                 continue
 
             # Numbers

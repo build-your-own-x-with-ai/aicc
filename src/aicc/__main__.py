@@ -10,11 +10,14 @@ from .lexer import Lexer, LexerError
 from .parser import Parser, ParseError
 from .semantic import SemanticAnalyzer, SemanticError
 from .codegen_arm64 import CodeGenARM64
+from .preprocessor import Preprocessor
+from .builtins import BUILTIN_FUNCTIONS
 
 
 def compile_file(source_path: str, output_path: str = None,
                  lex_only: bool = False, parse_only: bool = False,
-                 asm_only: bool = False, verbose: bool = False) -> int:
+                 asm_only: bool = False, verbose: bool = False,
+                 no_preprocess: bool = False) -> int:
     """Compile a C source file."""
     try:
         # Read source file
@@ -23,6 +26,17 @@ def compile_file(source_path: str, output_path: str = None,
 
         if verbose:
             print(f"Compiling {source_path}...")
+
+        # Preprocessing (unless disabled)
+        if not no_preprocess:
+            preprocessor = Preprocessor()
+            source = preprocessor.process(source, Path(source_path))
+
+            # Add built-in function declarations
+            source = BUILTIN_FUNCTIONS + "\n" + source
+
+            if verbose:
+                print("Preprocessing complete")
 
         # Lexical analysis
         lexer = Lexer(source)

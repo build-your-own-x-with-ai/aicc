@@ -379,6 +379,16 @@ class Parser:
             self.advance()
             return IntLiteral(value=token.value, line=token.line, col=token.col)
 
+        # String literal
+        if self.match(TokenType.STRING):
+            self.advance()
+            return StringLiteral(value=token.value, line=token.line, col=token.col)
+
+        # Character literal
+        if self.match(TokenType.CHAR_LITERAL):
+            self.advance()
+            return CharLiteral(value=token.value, line=token.line, col=token.col)
+
         # Identifier (variable or function call)
         if self.match(TokenType.IDENTIFIER):
             name = token.value
