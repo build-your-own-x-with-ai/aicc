@@ -1,0 +1,27 @@
+<!-- AICC Logo - SVG Version -->
+<svg width="400" height="150" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="400" height="150" fill="#1a1a1a" rx="10"/>
+
+  <!-- Main Text AICC -->
+  <text x="200" y="70" font-family="'Courier New', monospace" font-size="48" font-weight="bold"
+        fill="#f0f0f0" text-anchor="middle">AICC</text>
+
+  <!-- Subtitle -->
+  <text x="200" y="95" font-family="'Courier New', monospace" font-size="14"
+        fill="#888888" text-anchor="middle">ASCII C Compiler</text>
+
+  <!-- Pipeline visualization -->
+  <text x="30" y="125" font-family="'Courier New', monospace" font-size="11" fill="#4a9eff">
+    .c → Lex → Parse → Semantic → Codegen → exe
+  </text>
+
+  <!-- Accent line -->
+  <line x1="20" y1="105" x2="380" y2="105" stroke="#c4612f" stroke-width="2"/>
+
+  <!-- Corner brackets -->
+  <path d="M 10,10 L 30,10 M 10,10 L 10,30" stroke="#c4612f" stroke-width="2" fill="none"/>
+  <path d="M 390,10 L 370,10 M 390,10 L 390,30" stroke="#c4612f" stroke-width="2" fill="none"/>
+  <path d="M 10,140 L 30,140 M 10,140 L 10,120" stroke="#c4612f" stroke-width="2" fill="none"/>
+  <path d="M 390,140 L 370,140 M 390,140 L 390,120" stroke="#c4612f" stroke-width="2" fill="none"/>
+</svg>
