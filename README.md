@@ -38,7 +38,8 @@
 
 ```bash
 # 1. 克隆并安装
-git clone <repository-url>
+git clone # 克隆仓库
+git clone https://github.com/build-your-own-x-with-ai/aicc
 cd aicc
 python3 -m venv venv
 source venv/bin/activate
